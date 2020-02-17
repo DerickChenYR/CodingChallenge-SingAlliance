@@ -108,3 +108,10 @@ def parse_input_dates(start_date_str, end_date_str, time_unit):
 		raise ValueError("Input Error - Analysis timeframe exceeds maximum retrievable historical data from API.")
 
 	return start_date_obj, end_date_obj, duration_period, offset_period
+
+
+
+def write_output(output_dir, file_name, data):
+
+    with open(output_dir + "/" + file_name, "w") as file:
+        file.write(str(data))
