@@ -14,41 +14,53 @@ OUTPUT_DIR = './output'
 OUTPUT_FILENAME = 'results.txt'
 NUM_SIMS = 25000
 
-print("Script Started")
-
-#Read inputs from file
-inputs = load_inputs()
-
-if DEBUG:
-	print("Received Inputs:")
-	print(inputs)
 
 
-#Initiate API
-ACCESS_KEY, SECRET_KEY, URL = load_auth_keys()
-API = HuobiAPI(URL, ACCESS_KEY, SECRET_KEY)
+def main():
 
-symbols = inputs["contract_symbols"]
+	print("Script Started")
+
+	#Read inputs from file
+	inputs = load_inputs()
+
+	if DEBUG:
+		print("Received Inputs:")
+		print(inputs)
 
 
-#Retrieve symbol performance
-klines = []
-for symbol in symbols:
+	#Initiate API
+	ACCESS_KEY, SECRET_KEY, URL = load_auth_keys()
+	API = HuobiAPI(URL, ACCESS_KEY, SECRET_KEY)
 
-	df = load_contract_historical(API, symbol, inputs["duration"], inputs["offset"], inputs["period"], inputs["contract_type"])
-	klines.append(df)
+	symbols = inputs["contract_symbols"]
 
-print("Successfully retrieved symbol historical performance")
 
-#Create combined portfolio
-print("Creating portfolio and running {} simulations".format(NUM_SIMS))
-portfolio = create_portfolio(klines)
-dict_best = optimise(portfolio, num_sims = NUM_SIMS).to_dict()
+	#Retrieve symbol performance
+	klines = []
+	for symbol in symbols:
 
-del dict_best['ret']
-del dict_best['stdev']
-del dict_best['sharpe']
+		df = load_contract_historical(API, symbol, inputs["duration"], inputs["offset"], inputs["period"], inputs["contract_type"])
+		klines.append(df)
 
-#Write output
-write_output(OUTPUT_DIR, OUTPUT_FILENAME, dict_best)
-print("Wrote results to {}".format(OUTPUT_DIR + "/" + OUTPUT_FILENAME))
+	print("Successfully retrieved symbol historical performance")
+
+	#Create combined portfolio
+	print("Creating portfolio and running {} simulations".format(NUM_SIMS))
+	portfolio = create_portfolio(klines)
+	dict_best = optimise(portfolio, num_sims = NUM_SIMS).to_dict()
+
+	del dict_best['ret']
+	del dict_best['stdev']
+	del dict_best['sharpe']
+
+	#Write output
+	write_output(OUTPUT_DIR, OUTPUT_FILENAME, dict_best)
+	print("Wrote results to {}".format(OUTPUT_DIR + "/" + OUTPUT_FILENAME))
+	print("Script Completed")
+
+
+
+
+if __name__ == "__main__":
+
+	main()

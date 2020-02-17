@@ -21,11 +21,56 @@ def http_get_request(url, params, add_to_headers=None):
 		if response.status_code == 200:
 			return response.json()
 		else:
-			print(response)
-			return {"status":"fail"}
+			error_message = http_status_handler(response.status_code)
+			print(error_message)
+			return {"status":"fail","msg":error_message}
 	except Exception as e:
 		print("httpGet failed, detail is:%s" %e)
 		return {"status":"fail","msg": "%s"%e}
+
+
+
+#Interprete error message from status code
+def http_status_handler(status_code):
+
+	if status_code == 2001:
+		return "Invalid authentication."
+
+	elif status_code == 2002:
+		return "Authentication required."
+
+	elif status_code == 2003:
+		return "Authentication failed."
+
+	elif status_code == 2004:
+		return "Number of visits exceeds limit."
+
+	elif status_code == 2005:
+		return "Connection has been authenticated."
+
+	elif status_code == 2010:
+		return "Topic error."
+
+	elif status_code == 2011:
+		return "Contract doesn't exist."
+
+	elif status_code == 2012:
+		return "Topic not subscribed."
+
+	elif status_code == 2013:
+		return "Authentication type doesn't exist."
+
+	elif status_code == 2014:
+		return "Repeated subscription."
+
+	elif status_code == 2030:
+		return "Exceeds connection limit of single user."
+
+	elif status_code == 2040:
+		return "Missing required parameter."
+
+	else:
+		return "Undocumented API response error code!"
 
 
 
