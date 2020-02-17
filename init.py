@@ -1,7 +1,8 @@
-from HuobiAPI import HuobiAPI
+
 from helper import load_auth_keys, load_inputs
 import json
-
+from HuobiAPI import HuobiAPI
+from data_etl import load_contract_historical
 '''
 
 Reference for Optimization Algo
@@ -13,14 +14,16 @@ Reference for Optimization Algo
 
 inputs = load_inputs()
 print(inputs)
+print("\n\n\n")
 
 ACCESS_KEY, SECRET_KEY, URL = load_auth_keys()
 
+
 API = HuobiAPI(URL, ACCESS_KEY, SECRET_KEY)
 
-contracts = inputs["contracts"]
+symbols = inputs["contract_symbols"]
 
-for contract in contracts:
+for symbol in symbols:
 
-	response = API.get_contract_info(contract_code = contract)
-	print(response)
+	load_contract_historical(API, symbol, inputs["duration"], inputs["offset"], inputs["period"], inputs["contract_type"])
+	break
