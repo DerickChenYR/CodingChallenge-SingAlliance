@@ -6,17 +6,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Retrieve the appropriate historical data for the current symbol from HuobiAPI
-def load_contract_historical(API, contract_symbol, duration, offset, period, contract_type):
+def load_contract_historical(API, contract_symbol, duration, offset, period, contract_type, debug = False):
 
 	data_head = duration + offset
 
 	if contract_type == "quarter":
+		#Postfix for data type determination
 		contract_symbol += "_CQ"
 	else:
 		raise("Error - Unsupported contract type!")
 
+	#Make API call
 	response = API.get_contract_kline(contract_symbol, period, size = data_head)
-	df = pd.DataFrame(response['data'][:duration])
+	
+	if debug:
+		print("API request for {} returns {}".format(contract_symbol, response['status']))
+
+	#API responds with 200
+	if response['status'] == "ok":
+		df = pd.DataFrame(response['data'][:duration])
+	else:
+		#Return Error status
+		print("API request for {} returns {}, with message {}".format(contract_symbol, response['status'], response['msg']))
+		return response
+
+	if df.empty:
+		raise ValueError("API call was successful but returned no data")
 
 	#Use the closing price column, replace column name with the current symbol
 	new_columns = df.columns.values
@@ -50,19 +65,24 @@ Reference for Optimization Algo
 #https://www.quantopian.com/posts/the-efficient-frontier-markowitz-portfolio-optimization-in-python
 #https://www.pythonforfinance.net/2017/01/21/investment-portfolio-optimisation-with-python/
 '''
-def optimise(data_df, num_sims = 25000):
-	
+def optimise(data_df, num_sims = 25000, debug = False, output_dir = "."):
+
 	num_crypto = len(data_df.columns)
 	length_data = len(data_df.index)
 
+	if debug:
+		print("Begins optimisation with {} cryptos and {} datapoints".format(num_crypto, length_data))
+
+	#Compute percentage change from adj	
 	returns = data_df.pct_change()
 
+	#Compute mean hourly returns and covariance matrix
 	mean_hourly_returns = returns.mean()
 	cov_matrix = returns.cov()
 	
 
-	#Holds the simulated returns, std dev and sharpe ratio
-	results = np.zeros((num_crypto * 2, num_sims))
+	#Holds the simulated returns, std dev, sharpe ratio and weightages for each crypto
+	results = np.zeros((3+ num_crypto, num_sims))
 
 	for i in range(num_sims):
 
@@ -97,14 +117,14 @@ def optimise(data_df, num_sims = 25000):
 	#print(min_vol_port)
 
 
-	#create scatter plot coloured by Sharpe Ratio
+	#Create scatter plot coloured by Sharpe Ratio
 	fig = plt.figure()
 	plt.scatter(results_frame.stdev,results_frame.ret,c=results_frame.sharpe,cmap='RdYlBu')
 	plt.xlabel('Volatility')
 	plt.ylabel('Returns')
 	plt.colorbar()
 	plt.plot()
-	fig.suptitle(f'Mean-Variance Optimisation with {data_df.columns}', fontsize=8)
+	fig.suptitle(f'Mean-Variance Optimisation with {list(data_df.columns)}', fontsize=8)
 	fig.savefig('./output/graph.png')
 
 	return max_sharpe_port

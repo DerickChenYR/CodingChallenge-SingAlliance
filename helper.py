@@ -79,6 +79,7 @@ def http_status_handler(status_code):
 def load_auth_keys():
 	try:
 
+		#Loads API credentials from config file
 		with open("config.json") as secret:
 
 			credentials = json.load(secret)
@@ -87,7 +88,9 @@ def load_auth_keys():
 			return Huobi_keys["access"], Huobi_keys["secret"], Huobi_keys["url"]
 
 	except FileNotFoundError:
-		print("Error - config file not found.")
+		print("Warning - config file not found. API can only retrieve public data that does not require authentication.")
+
+		return None, None, "https://api.hbdm.com"
 
 
 
@@ -112,13 +115,17 @@ def load_inputs():
 			end_date_str = inputs[1]
 
 			params["period"] = inputs[2]
+
+			if params["period"] != "60min":
+				raise ValueError("This script does not currently support time intervals other than 60min.")
+
 			params["contract_type"] = inputs[4].lower()
 
 			time_unit = "".join([i for i in params["period"] if not i.isdigit()])
 
 			params["start_date"], params["end_date"], params["duration"], params["offset"] = parse_input_dates(start_date_str, end_date_str, time_unit)
 			
-			params["contract_codes"] = inputs[3].replace(" ", "").split(",")
+			params["contract_codes"] = inputs[3].upper().replace(" ", "").split(",")
 			params["contract_symbols"] = []
 			for code in params["contract_codes"]:
 				params["contract_symbols"].append("".join(i for i in code if not i.isdigit()))
@@ -126,10 +133,10 @@ def load_inputs():
 			return params 
 
 	except FileNotFoundError:
-		print("Error - input file not found.")
+		print("Input Error - input file not found.")
 
 	except ValueError:
-		print("Error - input format invlid.")
+		print("Input Error - input format invlid.")
 
 
 
@@ -137,14 +144,20 @@ def load_inputs():
 #Currently supports 60min periods
 def parse_input_dates(start_date_str, end_date_str, time_unit):
 
+	#Parse string date times to datetime objects
 	time_format = '%Y-%m-%dT%H:%M:%S%z'
-	start_date_obj = datetime.strptime(start_date_str, time_format)
-	end_date_obj = datetime.strptime(end_date_str, time_format)
+	try:
+		start_date_obj = datetime.strptime(start_date_str, time_format)
+		end_date_obj = datetime.strptime(end_date_str, time_format)
+	except:
+		raise ValueError("Input Error - input date/time format invalid.")
 
 	duration = end_date_obj - start_date_obj
 	offset = datetime.now(timezone.utc) - end_date_obj
 
 	#TODO: deal with different analysis time periods, e.g. 15min, 1week
+	if time_unit != "min":
+		raise ValueError("This script does not currently support time intervals other than min.")
 
 	duration_period = duration.days * 24 + duration.seconds//3600
 	offset_period = offset.days * 24 + offset.seconds//3600

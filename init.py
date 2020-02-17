@@ -9,10 +9,10 @@ import pandas as pd
 
 
 
-DEBUG = False
-OUTPUT_DIR = './output'
-OUTPUT_FILENAME = 'results.txt'
-NUM_SIMS = 25000
+DEBUG = False    #toggle for more debugging messages
+OUTPUT_DIR = './output'   #output directory for graph and optimal weightage output
+OUTPUT_FILENAME = 'results.txt'    #filename for optimal weightage output
+NUM_SIMS = 25000	#number of simulations of different weightages to run
 
 
 
@@ -38,17 +38,20 @@ def main():
 	#Retrieve symbol performance
 	klines = []
 	for symbol in symbols:
-
-		df = load_contract_historical(API, symbol, inputs["duration"], inputs["offset"], inputs["period"], inputs["contract_type"])
-		klines.append(df)
+		try:
+			df = load_contract_historical(API, symbol, inputs["duration"], inputs["offset"], inputs["period"], inputs["contract_type"], debug = DEBUG)
+			klines.append(df)
+		except ValueError:
+			print("Error - Failed to load data for {}, excluded from analysis!".format(symbol))
 
 	print("Successfully retrieved symbol historical performance")
 
 	#Create combined portfolio
 	print("Creating portfolio and running {} simulations".format(NUM_SIMS))
 	portfolio = create_portfolio(klines)
-	dict_best = optimise(portfolio, num_sims = NUM_SIMS).to_dict()
+	dict_best = optimise(portfolio, num_sims = NUM_SIMS, debug = DEBUG, output_dir = OUTPUT_DIR).to_dict()
 
+	#Remove data not required for the output
 	del dict_best['ret']
 	del dict_best['stdev']
 	del dict_best['sharpe']
