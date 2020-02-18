@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 #Retrieve the appropriate historical data for the current symbol from HuobiAPI
 def load_contract_historical(API, contract_symbol, duration, offset, period, contract_type, debug = False):
 
-	data_head = duration + offset
+	data_head = duration + offset + 1
 
 	if contract_type == "quarter":
 		#Postfix for data type determination
@@ -24,7 +24,7 @@ def load_contract_historical(API, contract_symbol, duration, offset, period, con
 
 	#API responds with 200
 	if response['status'] == "ok":
-		df = pd.DataFrame(response['data'][:duration])
+		df = pd.DataFrame(response['data'][:duration+1])
 	else:
 		#Return Error status
 		print("API request for {} returns {}, with message {}".format(contract_symbol, response['status'], response['msg']))
@@ -125,6 +125,7 @@ def optimise(data_df, num_sims = 25000, debug = False, output_dir = "."):
 	plt.colorbar()
 	plt.plot()
 	fig.suptitle(f'Mean-Variance Optimisation with {list(data_df.columns)}', fontsize=8)
-	fig.savefig('./output/graph.png')
+	fig.savefig(output_dir + '/graph.png')
+	print("Wrote graph to {}".format(output_dir + "/" + 'graph.png'))
 
 	return max_sharpe_port
