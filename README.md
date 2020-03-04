@@ -1,4 +1,4 @@
-# SingAlliance Coding Challenge
+# Mean-Variance Optimization with HuobiAPI
 by Derick Chen Yuran
 
 ## Documentation
